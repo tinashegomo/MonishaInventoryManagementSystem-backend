@@ -16,10 +16,6 @@ public class CustomerResponseDTO {
 
     private String phoneNumber;
 
-    private String alternativePhoneNumber;
-
-    private String address;
-
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

@@ -25,11 +25,6 @@ public class CustomerEntity {
     @Column(nullable = false)
     private String phoneNumber;
 
-    private String alternativePhoneNumber;
-
-    @Column(length = 1000)
-    private String address;
-
     @Column(nullable = false, updatable = false)
     @Setter(AccessLevel.NONE)
     private LocalDateTime createdAt;

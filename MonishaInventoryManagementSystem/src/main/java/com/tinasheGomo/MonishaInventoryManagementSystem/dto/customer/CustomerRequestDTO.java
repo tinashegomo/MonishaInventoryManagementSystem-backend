@@ -13,8 +13,4 @@ public class CustomerRequestDTO {
 
     @NotBlank(message = "Phone number is required")
     private String phoneNumber;
-
-    private String alternativePhoneNumber;
-
-    private String address;
 }

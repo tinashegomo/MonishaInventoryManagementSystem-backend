@@ -1,8 +1,11 @@
 package com.tinasheGomo.MonishaInventoryManagementSystem.controller.warehouse;
 
 import com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.request.WarehouseBatchRequestDTO;
+import com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.request.WarehouseBatchSizeRequestDTO;
 import com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.response.WarehouseBatchResponseDTO;
+import com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.response.WarehouseBatchSizeResponseDTO;
 import com.tinasheGomo.MonishaInventoryManagementSystem.service.warehouse.WarehouseBatchService;
+import com.tinasheGomo.MonishaInventoryManagementSystem.service.warehouse.WarehouseBatchSizeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +19,7 @@ import java.util.UUID;
 public class WarehouseController {
 
     private final WarehouseBatchService warehouseBatchService;
+    private final WarehouseBatchSizeService warehouseBatchSizeService;
 
     @PostMapping("/create-batch")
     public WarehouseBatchResponseDTO createWarehouseBatch(@RequestBody @Valid WarehouseBatchRequestDTO requestDTO){
@@ -35,5 +39,12 @@ public class WarehouseController {
     @DeleteMapping("/delete-batch/{batchId}")
     public void deleteWarehouseBatch(@PathVariable UUID batchId){
         warehouseBatchService.deleteWarehouseBatch(batchId);
+    }
+
+    @PostMapping("/add-sizes-to-batch/{batchId}")
+    public List<WarehouseBatchSizeResponseDTO> addSizesToBatch(
+            @PathVariable UUID batchId,
+            @RequestBody @Valid List<WarehouseBatchSizeRequestDTO> requestDTOs) {
+        return warehouseBatchSizeService.addSizesToBatch(batchId, requestDTOs);
     }
 }

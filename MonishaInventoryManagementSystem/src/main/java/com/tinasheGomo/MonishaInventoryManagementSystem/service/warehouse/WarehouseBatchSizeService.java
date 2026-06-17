@@ -8,9 +8,11 @@ import com.tinasheGomo.MonishaInventoryManagementSystem.exception.exceptions.Not
 import com.tinasheGomo.MonishaInventoryManagementSystem.mapper.warehouse.WarehouseBatchSizeMapper;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.warehouse.WarehouseBatchRepository;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.warehouse.WarehouseBatchSizeRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,25 +25,30 @@ public class WarehouseBatchSizeService {
     private final WarehouseBatchSizeMapper batchSizeMapper;
 
     /**
-     * ADD SIZE TO BATCH
-     * This is used when you want to add a NEW size to an existing batch.
+     * ADD SIZES TO BATCH
+     * This is used when you want to add NEW sizes to an existing batch.
      */
-    public WarehouseBatchSizeResponseDTO addSizeToBatch(UUID batchId, WarehouseBatchSizeRequestDTO requestDTO) {
+    @Transactional
+    public List<WarehouseBatchSizeResponseDTO> addSizesToBatch(UUID batchId, List<WarehouseBatchSizeRequestDTO> dtos) {
 
         // 1. Find parent batch
         WarehouseBatchEntity batch = batchRepository.findByBatchId(batchId)
                 .orElseThrow(() -> new NotFoundException("Batch not found"));
 
-        // 2. Convert DTO → Entity
-        WarehouseBatchSizeEntity size = batchSizeMapper.toEntity(requestDTO);
+        // 2. Convert DTOs → Entities and link each to the parent batch
+        List<WarehouseBatchSizeEntity> sizes = new ArrayList<>();
 
-        // 3. Link child → parent
-        size.setBatch(batch);
+        for (WarehouseBatchSizeRequestDTO dto : dtos) {
+            WarehouseBatchSizeEntity size = batchSizeMapper.toEntity(dto);
+            size.setBatch(batch);
+            sizes.add(size);
+        }
 
-        // 4. Save size
-        WarehouseBatchSizeEntity saved = batchSizeRepository.save(size);
+        // 3. Save all sizes
+        List<WarehouseBatchSizeEntity> savedSizes = batchSizeRepository.saveAll(sizes);
 
-        return batchSizeMapper.toResponse(saved);
+        // 4. Map to response
+        return batchSizeMapper.toResponseList(savedSizes);
     }
 
     /**

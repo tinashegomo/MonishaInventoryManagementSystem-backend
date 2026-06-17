@@ -11,6 +11,7 @@ import com.tinasheGomo.MonishaInventoryManagementSystem.repository.product.Produ
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,19 +24,22 @@ public class ProductSizeService {
     private final ProductSizeMapper sizeMapper;
 
     /**
-     * Add size to a product
+     * Add sizes to a product
      */
-    public ProductSizeEntity addSizeToProduct(UUID productId, ProductSizeRequestDTO dto) {
+    public List<ProductSizeEntity> addSizesToProduct(UUID productId, List<ProductSizeRequestDTO> dtos) {
 
         ProductEntity product = productRepository.findByProductId(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
-        ProductSizeEntity size = sizeMapper.toEntity(dto);
+        List<ProductSizeEntity> sizes = new ArrayList<>();
 
-        // LINK child → parent
-        size.setProduct(product);
+        for (ProductSizeRequestDTO dto : dtos) {
+            ProductSizeEntity size = sizeMapper.toEntity(dto);
+            size.setProduct(product);
+            sizes.add(size);
+        }
 
-        return sizeRepository.save(size);
+        return sizeRepository.saveAll(sizes);
     }
 
     /**

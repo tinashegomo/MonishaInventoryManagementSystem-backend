@@ -40,9 +40,8 @@ public class OrderItemEntity {
     /*
         SIZE
         The specific size ordered.
-        Used to deduct stock from the correct size entry.
+        Nullable — custom-made items have no size.
      */
-    @Column(nullable = false)
     private String size;
 
     @Column(nullable = false)

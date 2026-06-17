@@ -11,9 +11,13 @@ import com.tinasheGomo.MonishaInventoryManagementSystem.mapper.product.ProductMa
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.product.ProductRepository;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.school.SchoolRepository;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.warehouse.WarehouseBatchRepository;
+import com.tinasheGomo.MonishaInventoryManagementSystem.service.warehouse.WarehouseBatchSizeService;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,13 +33,22 @@ public class ProductService {
 
     private final ProductSizeService productSizeService;
 
+    private final WarehouseBatchSizeService batchSizeService;
+
+    private final EntityManager entityManager;
+
     /**
      * CREATE PRODUCT
      */
+    @Transactional
     public ProductResponseDTO createProduct(ProductRequestDTO requestDTO) {
 
         // 1. Map basic product fields
         ProductEntity product = productMapper.toEntity(requestDTO);
+
+        product.setProductSizes(new ArrayList<>());
+        product.setTotalQuantity(0);
+        product.setTotalPrice(0);
 
         // 2. Attach school (optional)
         if (requestDTO.getSchoolId() != null) {
@@ -59,23 +72,30 @@ public class ProductService {
         // 5. Save product first
         ProductEntity savedProduct = productRepository.save(product);
 
-        // 6. Add sizes via child service
+        // 6. Add all sizes to product at once
+        productSizeService.addSizesToProduct(savedProduct.getProductId(), requestDTO.getProductSizes());
+
+        // 7. Deduct stock from batch for each size
         for (ProductSizeRequestDTO sizeDTO : requestDTO.getProductSizes()) {
-            productSizeService.addSizeToProduct(savedProduct.getProductId(), sizeDTO);
+            batchSizeService.deductStock(batch.getBatchId(), sizeDTO.getSize(), sizeDTO.getQuantity());
         }
 
-        // 7. Reload product (important for correct totals)
+        // 8. Flush + Clear — force size inserts to DB, discard stale cached entity
+        entityManager.flush();
+        entityManager.clear();
+
+        // 9. Reload product with sizes (fresh from DB)
         ProductEntity updatedProduct = productRepository.findByProductId(savedProduct.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found after save"));
 
-        // 8. Calculate total quantity
+        // 10. Calculate total quantity
         int totalQuantity = productSizeService.calculateProductTotalQuantity(updatedProduct);
         updatedProduct.setTotalQuantity(totalQuantity);
 
-        // 9. Calculate total price
+        // 11. Calculate total price
         updatedProduct.setTotalPrice(totalQuantity * updatedProduct.getProductPrice());
 
-        // 10. Save final product
+        // 12. Save final product
         ProductEntity finalProduct = productRepository.save(updatedProduct);
 
         return productMapper.toResponse(finalProduct);

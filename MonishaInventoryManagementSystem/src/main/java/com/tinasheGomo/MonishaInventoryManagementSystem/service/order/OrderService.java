@@ -69,6 +69,7 @@ public class OrderService {
         order.setBalance(BigDecimal.ZERO);
         order.setFullyPaid(false);
         order.setHasMeasurements(false);
+        order.setOrderStatus(OrderStatus.PENDING);
 
         // Generate a unique human-readable order number
         // UUID suffix prevents collisions under high load

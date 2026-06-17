@@ -4,6 +4,7 @@ import com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.request.Wa
 import com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.response.WarehouseBatchResponseDTO;
 import com.tinasheGomo.MonishaInventoryManagementSystem.entity.warehouse.WarehouseBatchEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface WarehouseBatchMapper {
 
+    @Mapping(target = "batchSizes", ignore = true)
     WarehouseBatchEntity toEntity(WarehouseBatchRequestDTO requestDTO);
 
     WarehouseBatchResponseDTO toResponse(WarehouseBatchEntity batch);

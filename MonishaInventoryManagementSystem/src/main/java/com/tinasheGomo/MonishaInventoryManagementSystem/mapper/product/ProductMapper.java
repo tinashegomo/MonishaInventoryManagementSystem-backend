@@ -12,6 +12,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
+    @Mapping(target = "productSizes", ignore = true)
     ProductEntity toEntity(ProductRequestDTO requestDTO);
 
     @Mapping(source = "school.schoolId", target = "schoolId")
