@@ -46,6 +46,9 @@ public class WarehouseBatchEntity {
     @Column(length = 1000)
     private String description;
 
+    @Column
+    private String createdBy;
+
     @Column(nullable = false, updatable = false)
     @Setter(AccessLevel.NONE)
     private LocalDateTime createdAt;

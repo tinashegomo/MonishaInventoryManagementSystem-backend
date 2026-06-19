@@ -11,6 +11,7 @@ import com.tinasheGomo.MonishaInventoryManagementSystem.mapper.product.ProductMa
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.product.ProductRepository;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.school.SchoolRepository;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.warehouse.WarehouseBatchRepository;
+import com.tinasheGomo.MonishaInventoryManagementSystem.security.SecurityUtils;
 import com.tinasheGomo.MonishaInventoryManagementSystem.service.warehouse.WarehouseBatchSizeService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -68,6 +69,9 @@ public class ProductService {
         product.setType(batch.getType());
         product.setVariant(batch.getVariant());
         product.setColor(batch.getColor());
+
+        // 5. Set createdBy from current authenticated user
+        product.setCreatedBy(SecurityUtils.getCurrentUser().getUser().getUserName());
 
         // 5. Save product first
         ProductEntity savedProduct = productRepository.save(product);

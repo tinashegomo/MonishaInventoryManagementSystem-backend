@@ -1,14 +1,18 @@
 package com.tinasheGomo.MonishaInventoryManagementSystem.service.warehouse;
 
+import com.tinasheGomo.MonishaInventoryManagementSystem.dto.product.response.ProductResponseDTO;
 import com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.request.WarehouseBatchRequestDTO;
 import com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.request.WarehouseBatchSizeRequestDTO;
 import com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.response.WarehouseBatchResponseDTO;
+import com.tinasheGomo.MonishaInventoryManagementSystem.entity.product.ProductEntity;
 import com.tinasheGomo.MonishaInventoryManagementSystem.entity.warehouse.WarehouseBatchEntity;
 import com.tinasheGomo.MonishaInventoryManagementSystem.entity.warehouse.WarehouseBatchSizeEntity;
 import com.tinasheGomo.MonishaInventoryManagementSystem.exception.exceptions.DuplicateException;
 import com.tinasheGomo.MonishaInventoryManagementSystem.exception.exceptions.NotFoundException;
+import com.tinasheGomo.MonishaInventoryManagementSystem.mapper.product.ProductMapper;
 import com.tinasheGomo.MonishaInventoryManagementSystem.mapper.warehouse.WarehouseBatchMapper;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.warehouse.WarehouseBatchRepository;
+import com.tinasheGomo.MonishaInventoryManagementSystem.security.SecurityUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +29,7 @@ public class WarehouseBatchService {
     private final WarehouseBatchRepository batchRepository;
     private final WarehouseBatchMapper batchMapper;
     private final WarehouseBatchSizeService batchSizeService;
+    private final ProductMapper productMapper;
     private final EntityManager entityManager;
 
     /**
@@ -67,6 +72,7 @@ public class WarehouseBatchService {
         batch.setBatchSizes(new ArrayList<>());
         batch.setTotalQuantity(0);
         batch.setTotalPrice(0);
+        batch.setCreatedBy(SecurityUtils.getCurrentUser().getUser().getUserName());
 
         // ─── Step 3: Save batch (generates UUID, persists to DB) ───────────
         // The batch MUST be saved first because:
@@ -122,17 +128,34 @@ public class WarehouseBatchService {
         return batchMapper.toResponse(finalBatch);
     }
 
+    @Transactional
     public WarehouseBatchResponseDTO getWarehouseBatchById(UUID batchId) {
 
         WarehouseBatchEntity batch = batchRepository.findByBatchId(batchId)
                 .orElseThrow(() -> new NotFoundException("Batch not found"));
 
-        return batchMapper.toResponse(batch);
+        WarehouseBatchResponseDTO response = batchMapper.toResponse(batch);
+        response.setCreatedBy(batch.getCreatedBy());
+
+        // Map products from the batch
+        if (batch.getProducts() != null && !batch.getProducts().isEmpty()) {
+            List<ProductResponseDTO> productResponses = productMapper.toResponseList(batch.getProducts());
+            response.setProducts(productResponses);
+        }
+
+        return response;
     }
 
     public List<WarehouseBatchResponseDTO> getAllWarehouseBatches() {
 
-        return batchMapper.toResponseList(batchRepository.findAll());
+        List<WarehouseBatchEntity> batches = batchRepository.findAll();
+        List<WarehouseBatchResponseDTO> responses = new ArrayList<>();
+        for (WarehouseBatchEntity batch : batches) {
+            WarehouseBatchResponseDTO response = batchMapper.toResponse(batch);
+            response.setCreatedBy(batch.getCreatedBy());
+            responses.add(response);
+        }
+        return responses;
     }
 
     public void deleteWarehouseBatch(UUID batchId) {

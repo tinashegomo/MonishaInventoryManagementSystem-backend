@@ -37,6 +37,8 @@ public class ProductResponseDTO {
 
     private String description;
 
+    private String createdBy;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

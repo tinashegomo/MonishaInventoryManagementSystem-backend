@@ -68,6 +68,8 @@ public class OrderResponseDTO {
 
     private String notes;
 
+    private String createdBy;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

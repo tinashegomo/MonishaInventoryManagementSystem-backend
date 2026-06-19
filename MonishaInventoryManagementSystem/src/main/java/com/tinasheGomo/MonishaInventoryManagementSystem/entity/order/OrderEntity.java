@@ -81,6 +81,9 @@ public class OrderEntity {
     @Column(length = 1000)
     private String notes;
 
+    @Column
+    private String createdBy;
+
     /*
         TIMESTAMPS
         createdAt is set once and never changed.

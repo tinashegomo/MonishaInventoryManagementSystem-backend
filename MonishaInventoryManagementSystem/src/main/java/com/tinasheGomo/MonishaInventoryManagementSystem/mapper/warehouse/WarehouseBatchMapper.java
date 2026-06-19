@@ -13,8 +13,10 @@ import java.util.List;
 public interface WarehouseBatchMapper {
 
     @Mapping(target = "batchSizes", ignore = true)
+    @Mapping(target = "products", ignore = true)
     WarehouseBatchEntity toEntity(WarehouseBatchRequestDTO requestDTO);
 
+    @Mapping(target = "products", ignore = true)
     WarehouseBatchResponseDTO toResponse(WarehouseBatchEntity batch);
 
     List<WarehouseBatchResponseDTO> toResponseList(List<WarehouseBatchEntity> batches);

@@ -1,5 +1,6 @@
 package com.tinasheGomo.MonishaInventoryManagementSystem.dto.warehouse.response;
 
+import com.tinasheGomo.MonishaInventoryManagementSystem.dto.product.response.ProductResponseDTO;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,9 +30,13 @@ public class WarehouseBatchResponseDTO {
 
     private String description;
 
+    private String createdBy;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
 
     private List<WarehouseBatchSizeResponseDTO> batchSizes;
+
+    private List<ProductResponseDTO> products;
 }

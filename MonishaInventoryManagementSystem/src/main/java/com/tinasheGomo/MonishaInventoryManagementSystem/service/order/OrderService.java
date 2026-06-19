@@ -13,11 +13,14 @@ import com.tinasheGomo.MonishaInventoryManagementSystem.mapper.order.OrderMapper
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.customer.CustomerRepository;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.order.OrderRepository;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.school.SchoolRepository;
+import com.tinasheGomo.MonishaInventoryManagementSystem.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -78,6 +81,9 @@ public class OrderService {
                 UUID.randomUUID().toString().substring(0, 4);
 
         order.setOrderNumber(orderNumber);
+
+        // Set createdBy from current authenticated user
+        order.setCreatedBy(SecurityUtils.getCurrentUser().getUser().getUserName());
 
         // Save order first to generate orderId
         // order items need this ID to set their order_id foreign key
@@ -176,6 +182,9 @@ public class OrderService {
         OrderEntity order = orderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         order.setOrderStatus(status);
+        if (status == OrderStatus.COMPLETED) {
+            order.setCollectionDate(LocalDate.now());
+        }
         return orderMapper.toResponse(orderRepository.save(order));
     }
 }

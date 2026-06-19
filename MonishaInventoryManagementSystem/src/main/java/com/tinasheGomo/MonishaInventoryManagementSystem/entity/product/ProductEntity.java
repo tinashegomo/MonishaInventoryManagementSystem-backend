@@ -47,6 +47,9 @@ public class ProductEntity {
     @Column(nullable = false)
     private Integer totalQuantity;
 
+    @Column
+    private String createdBy;
+
     @Column(nullable = false, updatable = false)
     @Setter(AccessLevel.NONE)
     private LocalDateTime createdAt;
