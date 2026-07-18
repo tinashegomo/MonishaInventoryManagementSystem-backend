@@ -14,5 +14,7 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID> 
 
     Optional<CustomerEntity> findByCustomerName(String customerName);
 
+    Optional<CustomerEntity> findByPhoneNumber(String phoneNumber);
+
     boolean existsByCustomerName(String customerName);
 }

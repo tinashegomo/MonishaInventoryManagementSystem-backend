@@ -1,6 +1,7 @@
 package com.tinasheGomo.MonishaInventoryManagementSystem.dto.order.response;
 
 import com.tinasheGomo.MonishaInventoryManagementSystem.enums.OrderStatus;
+import com.tinasheGomo.MonishaInventoryManagementSystem.enums.PaymentType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -49,6 +50,8 @@ public class OrderResponseDTO {
     private BigDecimal paidAmount;
     private BigDecimal balance;
     private Boolean fullyPaid;
+
+    private PaymentType paymentType;
 
     /*
         ORDER FLAGS

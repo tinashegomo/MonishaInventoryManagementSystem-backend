@@ -7,6 +7,7 @@ import com.tinasheGomo.MonishaInventoryManagementSystem.entity.order.OrderEntity
 import com.tinasheGomo.MonishaInventoryManagementSystem.entity.order.OrderItemEntity;
 import com.tinasheGomo.MonishaInventoryManagementSystem.entity.school.SchoolEntity;
 import com.tinasheGomo.MonishaInventoryManagementSystem.enums.OrderStatus;
+import com.tinasheGomo.MonishaInventoryManagementSystem.enums.PaymentType;
 import com.tinasheGomo.MonishaInventoryManagementSystem.exception.exceptions.NotFoundException;
 import com.tinasheGomo.MonishaInventoryManagementSystem.mapper.order.OrderMapper;
 import com.tinasheGomo.MonishaInventoryManagementSystem.repository.customer.CustomerRepository;
@@ -105,8 +106,18 @@ public class OrderService {
             throw new RuntimeException("Paid amount cannot exceed total amount");
         }
 
+        // For online payments (CARD, MOBILE_MONEY), enforce 40% minimum
+        // CASH payments (counter staff) have no minimum — can be zero
+        if (dto.getPaymentType() != PaymentType.CASH) {
+            BigDecimal minPayment = total.multiply(new BigDecimal("0.40"));
+            if (dto.getPaidAmount().compareTo(minPayment) < 0) {
+                throw new RuntimeException("Minimum payment is 40% of total (" + minPayment + ")");
+            }
+        }
+
         savedOrder.setTotalAmount(total);
         savedOrder.setPaidAmount(dto.getPaidAmount());
+        savedOrder.setPaymentType(dto.getPaymentType());
         savedOrder.setBalance(total.subtract(dto.getPaidAmount()));
 
         // Order is fully paid when balance reaches zero
@@ -165,6 +176,13 @@ public class OrderService {
     // get orders by status — e.g. all PENDING orders
     public List<OrderResponseDTO> getOrdersByStatus(OrderStatus status) {
         return orderMapper.toResponseList(orderRepository.findByOrderStatus(status));
+    }
+
+    // get orders by customer ID — used by ecom backend for order history
+    public List<OrderResponseDTO> getOrdersByCustomerId(UUID customerId) {
+        return orderMapper.toResponseList(
+                orderRepository.findByCustomer_CustomerIdOrderByCreatedAtDesc(customerId)
+        );
     }
 
     // update status only — used by staff to move orders through lifecycle

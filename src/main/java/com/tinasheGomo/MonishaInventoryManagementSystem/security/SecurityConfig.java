@@ -3,6 +3,7 @@ package com.tinasheGomo.MonishaInventoryManagementSystem.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -23,8 +24,11 @@ public class SecurityConfig {
     // Service that loads user from database
     private final CustomUserDetailsService userDetailsService;
 
-    // Our JWT filter
-    private final AuthFilter AuthFilter;
+    // Our JWT filter for staff auth
+    private final AuthFilter authFilter;
+
+    // API key filter for ecom server-to-server calls
+    private final ApiKeyAuthFilter apiKeyAuthFilter;
 
     /*
      Password Encoder
@@ -78,54 +82,77 @@ public class SecurityConfig {
     }
 
     /*
-     Main Security Configuration
-
-     This controls which endpoints are protected.
-     */
+     CHAIN 1 — @Order(1) runs first.
+     Handles /api/public/imsClient/** paths only.
+     Authenticated via X-Internal-Api-Key header (not JWT).
+     Scoped keys: ecom-catalog (read products), ecom-customers (create customers), ecom-orders (create/view orders).
+     If a request doesn't match /api/public/imsClient/**, it falls through to Chain 2.
+    */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain publicApiSecurityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> {}) // enable CORS using CorsConfig
+                // Only match paths starting with /api/public/imsClient/
+                // All other paths fall through to Chain 2
+                .securityMatcher("/api/public/imsClient/**")
 
-                /*
-                 Disable CSRF because we are using JWT
-                 (stateless API)
-                 */
+                .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
 
-                /*
-                 JWT APIs are stateless
-
-                 Server does NOT store sessions
-                 */
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                /*
-                 Configure endpoint authorization
-                 */
                 .authorizeHttpRequests(auth -> auth
+                        // Product catalog — requires catalog key (read-only)
+                        .requestMatchers("/api/public/imsClient/products/**").hasRole("SERVICE_CATALOG")
 
-                        // Public endpoints
+                        // Customer creation — requires customers key
+                        .requestMatchers("/api/public/imsClient/customers/**").hasRole("SERVICE_CUSTOMERS")
+
+                        // Order operations — requires orders key
+                        .requestMatchers("/api/public/imsClient/orders/**").hasRole("SERVICE_ORDERS")
+                )
+
+                // Add API key filter before Spring's default filters
+                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    /*
+     CHAIN 2 — @Order(2) runs second (only if Chain 1 didn't match).
+     Handles all staff endpoints under /api/monishaInventory/**.
+     Authenticated via JWT in Authorization: Bearer header.
+     /auth/** is public (login/register). All other paths require a valid staff JWT.
+     Ecom requests never reach this chain — Chain 1 catches them first.
+    */
+    @Bean
+    @Order(2)
+    public SecurityFilterChain staffSecurityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+                .cors(cors -> {}) // enable CORS using CorsConfig
+
+                .csrf(csrf -> csrf.disable())
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                .authorizeHttpRequests(auth -> auth
+                        // Staff auth endpoints — no login required
                         .requestMatchers("/api/monishaInventory/auth/**").permitAll()
 
-                        // Everything else requires login
+                        // All other staff endpoints require a valid JWT
                         .anyRequest().authenticated()
                 )
 
-                /*
-                 Use our authentication provider
-                 */
                 .authenticationProvider(authenticationProvider())
 
-
-                /*
-                 Add JWT filter BEFORE Spring's login filter
-                 */
-                .addFilterBefore(AuthFilter, UsernamePasswordAuthenticationFilter.class);
-
+                // Add JWT filter before Spring's default filters
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

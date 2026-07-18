@@ -3,6 +3,7 @@ package com.tinasheGomo.MonishaInventoryManagementSystem.entity.order;
 import com.tinasheGomo.MonishaInventoryManagementSystem.entity.customer.CustomerEntity;
 import com.tinasheGomo.MonishaInventoryManagementSystem.entity.school.SchoolEntity;
 import com.tinasheGomo.MonishaInventoryManagementSystem.enums.OrderStatus;
+import com.tinasheGomo.MonishaInventoryManagementSystem.enums.PaymentType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -54,6 +55,10 @@ public class OrderEntity {
 
     @Column(nullable = false)
     private Boolean fullyPaid;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentType paymentType;
 
     /*
         ORDER FLAGS

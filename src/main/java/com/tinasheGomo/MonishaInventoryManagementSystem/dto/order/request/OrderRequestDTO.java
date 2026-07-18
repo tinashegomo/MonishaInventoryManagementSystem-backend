@@ -1,5 +1,6 @@
 package com.tinasheGomo.MonishaInventoryManagementSystem.dto.order.request;
 
+import com.tinasheGomo.MonishaInventoryManagementSystem.enums.PaymentType;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -38,6 +39,9 @@ public class OrderRequestDTO {
      */
     @NotNull(message = "Paid amount is required")
     private BigDecimal paidAmount;
+
+    @NotNull(message = "Payment type is required")
+    private PaymentType paymentType;
 
     /*
         COLLECTION DATE (OPTIONAL)
