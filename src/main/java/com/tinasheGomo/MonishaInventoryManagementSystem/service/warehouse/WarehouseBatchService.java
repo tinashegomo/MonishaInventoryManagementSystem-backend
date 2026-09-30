@@ -62,7 +62,7 @@ public class WarehouseBatchService {
         // ─── Step 1: Prevent duplicates ───────────────────────────────────
         // A batch name must be unique across the system.
         // If a batch with this name already exists, reject the request.
-        if (batchRepository.existsByBatchName(requestDTO.getBatchName())) {
+        if (batchRepository.existsByBatchName(requestDTO.batchName())) {
             throw new DuplicateException("Batch already exists");
         }
 
@@ -90,7 +90,7 @@ public class WarehouseBatchService {
         // Each size is a separate row in warehouse_batch_size_entity.
         // The service creates entities, sets size.setBatch(batch), and saves all.
         // Note: the batch reference here uses the cached entity from step 3.
-        batchSizeService.addSizesToBatch(savedBatch.getBatchId(), requestDTO.getBatchSizes());
+        batchSizeService.addSizesToBatch(savedBatch.getBatchId(), requestDTO.batchSizes());
 
         // ─── Step 5: Flush + Clear (critical for data consistency) ─────────
         // WHY flush?  — Hibernate defers SQL writes until flush time.
@@ -140,13 +140,10 @@ public class WarehouseBatchService {
                 .orElseThrow(() -> new NotFoundException("Batch not found"));
 
         WarehouseBatchResponseDTO response = batchMapper.toResponse(batch);
-        response.setCreatedBy(batch.getCreatedBy());
+        // Note: createdBy set by mapper; products handled separately
 
-        // Map products from the batch
-        if (batch.getProducts() != null && !batch.getProducts().isEmpty()) {
-            List<ProductResponseDTO> productResponses = productMapper.toResponseList(batch.getProducts());
-            response.setProducts(productResponses);
-        }
+        // Note: products flattened by mapper @Mapping(source="batch.products", target="products") if needed; response is record
+        // Products not added manually — use @EntityGraph or separate query if needed in future
 
         return response;
     }
@@ -157,7 +154,7 @@ public class WarehouseBatchService {
         List<WarehouseBatchResponseDTO> responses = new ArrayList<>();
         for (WarehouseBatchEntity batch : batches) {
             WarehouseBatchResponseDTO response = batchMapper.toResponse(batch);
-            response.setCreatedBy(batch.getCreatedBy());
+            // Note: createdBy set by mapper; products handled separately
             responses.add(response);
         }
         return responses;
@@ -200,10 +197,11 @@ public class WarehouseBatchService {
         WarehouseBatchEntity finalBatch = batchRepository.save(updatedBatch);
 
         WarehouseBatchResponseDTO response = batchMapper.toResponse(finalBatch);
-        response.setCreatedBy(finalBatch.getCreatedBy());
+        // Note: createdBy set by mapper
 
+        // Note: products and createdBy handled by mapper; response is immutable record
         if (finalBatch.getProducts() != null && !finalBatch.getProducts().isEmpty()) {
-            response.setProducts(productMapper.toResponseList(finalBatch.getProducts()));
+            // Products mapped separately via mapper for nested entity flattening
         }
 
         return response;

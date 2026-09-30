@@ -1,3 +1,9 @@
+/*
+ * QUICK MEMORY CHECK:
+ * requestDTO -> entity = ignore for non-user fields
+ * entity -> responseDTO = source for flattening relationships
+ * User-input fields (batchName, quantity) = no annotation needed (default mapped)
+ */
 package com.tinasheGomo.MonishaInventoryManagementSystem.mapper.product;
 
 import com.tinasheGomo.MonishaInventoryManagementSystem.dto.product.request.ProductSizeRequestDTO;

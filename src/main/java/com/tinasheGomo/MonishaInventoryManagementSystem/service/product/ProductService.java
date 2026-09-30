@@ -59,15 +59,15 @@ public class ProductService {
         product.setTotalPrice(0);
 
         // 2. Attach school (optional)
-        if (requestDTO.getSchoolId() != null) {
-            SchoolEntity school = schoolRepository.findBySchoolId(requestDTO.getSchoolId())
+        if (requestDTO.schoolId() != null) {
+            SchoolEntity school = schoolRepository.findBySchoolId(requestDTO.schoolId())
                     .orElseThrow(() -> new NotFoundException("School not found"));
 
             product.setSchool(school);
         }
 
         // 3. Attach batch (mandatory)
-        WarehouseBatchEntity batch = batchRepository.findByBatchId(requestDTO.getBatchId())
+        WarehouseBatchEntity batch = batchRepository.findByBatchId(requestDTO.batchId())
                 .orElseThrow(() -> new NotFoundException("Batch not found"));
 
         product.setBatch(batch);
@@ -84,11 +84,11 @@ public class ProductService {
         ProductEntity savedProduct = productRepository.save(product);
 
         // 6. Add all sizes to product at once
-        productSizeService.addSizesToProduct(savedProduct.getProductId(), requestDTO.getProductSizes());
+        productSizeService.addSizesToProduct(savedProduct.getProductId(), requestDTO.productSizes());
 
         // 7. Deduct stock from batch for each size
-        for (ProductSizeRequestDTO sizeDTO : requestDTO.getProductSizes()) {
-            batchSizeService.deductStock(batch.getBatchId(), sizeDTO.getSize(), sizeDTO.getQuantity());
+        for (ProductSizeRequestDTO sizeDTO : requestDTO.productSizes()) {
+            batchSizeService.deductStock(batch.getBatchId(), sizeDTO.size(), sizeDTO.quantity());
         }
 
         // 8. Flush + Clear — force size inserts to DB, discard stale cached entity

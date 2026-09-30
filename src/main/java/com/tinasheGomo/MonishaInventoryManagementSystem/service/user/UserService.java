@@ -128,43 +128,43 @@ public class UserService {
 
         // Orders
         List<OrderResponseDTO> userOrders = orderMapper.toResponseList(orderRepository.findAll()).stream()
-                .filter(o -> creatorName.equals(o.getCreatedBy()))
+                .filter(o -> creatorName.equals(o.createdBy()))
                 .sorted((a, b) -> {
-                    if (a.getCreatedAt() == null) return 1;
-                    if (b.getCreatedAt() == null) return -1;
-                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    if (a.createdAt() == null) return 1;
+                    if (b.createdAt() == null) return -1;
+                    return b.createdAt().compareTo(a.createdAt());
                 })
                 .toList();
 
         // Products
         List<ProductResponseDTO> userProducts = productMapper.toResponseList(productRepository.findAll()).stream()
-                .filter(p -> creatorName.equals(p.getCreatedBy()))
+                .filter(p -> creatorName.equals(p.createdBy()))
                 .sorted((a, b) -> {
-                    if (a.getCreatedAt() == null) return 1;
-                    if (b.getCreatedAt() == null) return -1;
-                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    if (a.createdAt() == null) return 1;
+                    if (b.createdAt() == null) return -1;
+                    return b.createdAt().compareTo(a.createdAt());
                 })
                 .toList();
 
         // Batches
         List<WarehouseBatchResponseDTO> userBatches = warehouseBatchMapper.toResponseList(warehouseBatchRepository.findAll()).stream()
-                .filter(b -> creatorName.equals(b.getCreatedBy()))
+                .filter(b -> creatorName.equals(b.createdBy()))
                 .sorted((a, b) -> {
-                    if (a.getCreatedAt() == null) return 1;
-                    if (b.getCreatedAt() == null) return -1;
-                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    if (a.createdAt() == null) return 1;
+                    if (b.createdAt() == null) return -1;
+                    return b.createdAt().compareTo(a.createdAt());
                 })
                 .toList();
 
-        UserActivityDTO activity = new UserActivityDTO();
-        activity.setUser(userMapper.toResponse(user));
-        activity.setTotalOrdersCreated(userOrders.size());
-        activity.setTotalProductsCreated(userProducts.size());
-        activity.setTotalBatchesCreated(userBatches.size());
-        activity.setRecentOrders(userOrders.stream().limit(10).toList());
-        activity.setRecentProducts(userProducts.stream().limit(10).toList());
-        activity.setRecentBatches(userBatches.stream().limit(10).toList());
-
+        UserActivityDTO activity = new UserActivityDTO(
+            userMapper.toResponse(user),
+            userOrders.size(),
+            userProducts.size(),
+            userBatches.size(),
+            userOrders.stream().limit(10).toList(),
+            userProducts.stream().limit(10).toList(),
+            userBatches.stream().limit(10).toList()
+        );
         return activity;
     }
 }

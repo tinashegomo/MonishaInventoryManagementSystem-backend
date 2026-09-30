@@ -70,12 +70,12 @@ public class AdminService {
     }
 
     private ResetAuditLogResponseDTO toDTO(ResetAuditLogEntity entity) {
-        ResetAuditLogResponseDTO dto = new ResetAuditLogResponseDTO();
-        dto.setLogId(entity.getLogId());
-        dto.setPerformedBy(entity.getPerformedBy());
-        dto.setTablesCleared(entity.getTablesCleared());
-        dto.setRowCounts(entity.getRowCounts());
-        dto.setResetAt(entity.getResetAt());
-        return dto;
+        return new ResetAuditLogResponseDTO(
+            entity.getLogId(),
+            entity.getPerformedBy(),
+            entity.getTablesCleared(),
+            entity.getRowCounts(),
+            entity.getResetAt()
+        );
     }
 }

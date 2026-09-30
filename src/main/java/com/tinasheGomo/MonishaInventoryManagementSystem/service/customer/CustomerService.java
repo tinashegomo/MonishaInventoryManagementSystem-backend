@@ -30,7 +30,7 @@ public class CustomerService {
     public CustomerResponseDTO createCustomer(CustomerRequestDTO requestDTO) {
 
         boolean customerExists = customerRepository.existsByCustomerName(
-                        requestDTO.getCustomerName()
+                        requestDTO.customerName()
                 );
 
         if (customerExists) {
@@ -89,9 +89,9 @@ public class CustomerService {
                                 () -> new NotFoundException("Customer not found")
                         );
 
-        boolean customerNameExists = customerRepository.existsByCustomerName(requestDTO.getCustomerName());
+        boolean customerNameExists = customerRepository.existsByCustomerName(requestDTO.customerName());
 
-        if (customerNameExists && !customer.getCustomerName().equals(requestDTO.getCustomerName())) {
+        if (customerNameExists && !customer.getCustomerName().equals(requestDTO.customerName())) {
             throw new DuplicateException("Customer Name already exists");
         }
 

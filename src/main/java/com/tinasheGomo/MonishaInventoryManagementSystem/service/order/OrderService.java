@@ -42,16 +42,16 @@ public class OrderService {
 
         // Fetch and attach customer
         // every order must belong to a customer
-        CustomerEntity customer = customerRepository.findById(dto.getCustomerId())
+        CustomerEntity customer = customerRepository.findById(dto.customerId())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
 
         order.setCustomer(customer);
 
         // Attach school if provided
         // schoolOrder flag is derived from this — no need for frontend to send it
-        if (dto.getSchoolId() != null) {
+        if (dto.schoolId() != null) {
 
-            SchoolEntity school = schoolRepository.findById(dto.getSchoolId())
+            SchoolEntity school = schoolRepository.findById(dto.schoolId())
                     .orElseThrow(() -> new NotFoundException("School not found"));
 
             order.setSchool(school);
@@ -88,7 +88,7 @@ public class OrderService {
         OrderEntity savedOrder = orderRepository.save(order);
 
         // Create each order item via OrderItemService
-        List<OrderItemEntity> items = orderItemService.addOrderItemsToOrder(savedOrder, dto.getOrderItems());
+        List<OrderItemEntity> items = orderItemService.addOrderItemsToOrder(savedOrder, dto.orderItems());
 
         savedOrder.setOrderItems(items);
 
@@ -102,23 +102,23 @@ public class OrderService {
 
         // Paid amount cannot exceed what the order is worth
         // prevents accidental overpayment at creation time
-        if (dto.getPaidAmount().compareTo(total) > 0) {
+        if (dto.paidAmount().compareTo(total) > 0) {
             throw new RuntimeException("Paid amount cannot exceed total amount");
         }
 
         // For online payments (CARD, MOBILE_MONEY), enforce 40% minimum
         // CASH payments (counter staff) have no minimum — can be zero
-        if (dto.getPaymentType() != PaymentType.CASH) {
+        if (dto.paymentType() != PaymentType.CASH) {
             BigDecimal minPayment = total.multiply(new BigDecimal("0.40"));
-            if (dto.getPaidAmount().compareTo(minPayment) < 0) {
+            if (dto.paidAmount().compareTo(minPayment) < 0) {
                 throw new RuntimeException("Minimum payment is 40% of total (" + minPayment + ")");
             }
         }
 
         savedOrder.setTotalAmount(total);
-        savedOrder.setPaidAmount(dto.getPaidAmount());
-        savedOrder.setPaymentType(dto.getPaymentType());
-        savedOrder.setBalance(total.subtract(dto.getPaidAmount()));
+        savedOrder.setPaidAmount(dto.paidAmount());
+        savedOrder.setPaymentType(dto.paymentType());
+        savedOrder.setBalance(total.subtract(dto.paidAmount()));
 
         // Order is fully paid when balance reaches zero
         savedOrder.setFullyPaid(savedOrder.getBalance().compareTo(BigDecimal.ZERO) == 0);

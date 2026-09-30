@@ -23,7 +23,7 @@ public class SchoolService {
     public SchoolResponseDTO createSchool(SchoolRequestDTO requestDTO){
 
         // DuplicateException thrown here — GlobalExceptionHandler catches it → 409 CONFLICT
-        if (schoolRepository.existsBySchoolName(requestDTO.getSchoolName())) {
+        if (schoolRepository.existsBySchoolName(requestDTO.schoolName())) {
             throw new DuplicateException("Duplicate school with this name found");
         }
 

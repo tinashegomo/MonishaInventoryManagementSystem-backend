@@ -26,8 +26,16 @@ public class AuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
+            // Envelope from client: URL, Authorization header, body data.
+            // request.getHeader("Authorization") reads the JWT stamp.
             HttpServletRequest request,
+
+            // Blank reply paper: status codes, headers, response body.
+            // Controller writes the answer here after passing the filter.
             HttpServletResponse response,
+
+            // Next guard in line: passes request/response forward.
+            // Without doFilter(), the chain stops — request dies here.
             FilterChain filterChain
     )throws ServletException, IOException {
 
@@ -80,8 +88,7 @@ public class AuthFilter extends OncePerRequestFilter {
              Load user from database using CustomUserDetailsService
              */
 
-            UserDetails userDetails =
-                    userDetailsService.loadUserByUsername(username);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             /*
              STEP 6
@@ -126,9 +133,10 @@ public class AuthFilter extends OncePerRequestFilter {
 
         /*
          STEP 10
-         Continue request to next filter or controller
+         Pass EVERYTHING (request, response, next-step) to the next guard.
+         This is like saying: "Letter checked, pass to next guard → controller."
+         Without this line, the request dies here!
          */
-
         filterChain.doFilter(request, response);
 
     }

@@ -29,11 +29,11 @@ public class AuthService {
 
     public AuthResponseDTO register(UserRequestDTO requestDTO) {
 
-        if(userRepository.existsByUserEmail(requestDTO.getUserEmail())) {
+        if(userRepository.existsByUserEmail(requestDTO.userEmail())) {
             throw new DuplicateException("Email already exists");
         }
 
-        if(userRepository.existsByUserName(requestDTO.getUserName())) {
+        if(userRepository.existsByUserName(requestDTO.userName())) {
             throw new DuplicateException("Username already exists");
         }
 
@@ -42,7 +42,7 @@ public class AuthService {
         user.setUserRole(UserRole.USER);
 
         user.setUserPassword(
-                passwordEncoder.encode(requestDTO.getUserPassword())
+                passwordEncoder.encode(requestDTO.userPassword())
         );
 
         UserEntity savedUser = userRepository.save(user);
@@ -62,12 +62,12 @@ public class AuthService {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        requestDTO.getEmail(),
-                        requestDTO.getPassword()
+                        requestDTO.email(),
+                        requestDTO.password()
                 )
         );
 
-        UserEntity user = userRepository.findByUserEmail(requestDTO.getEmail()).orElseThrow(
+        UserEntity user = userRepository.findByUserEmail(requestDTO.email()).orElseThrow(
                 () -> new RuntimeException("Invalid credentials"
                 )
         );

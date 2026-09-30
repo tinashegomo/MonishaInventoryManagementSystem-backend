@@ -88,39 +88,38 @@ public class WarehouseBatchSizeService {
     public void deductStock(UUID batchId, String size, int quantityToDeduct
     ) {
 
+        // STAGE 1: Find the size record inside this batch
         WarehouseBatchSizeEntity batchSize = batchSizeRepository.findByBatch_BatchIdAndSize(batchId, size)
                         .orElseThrow(
                                 () -> new NotFoundException("Size not found in batch")
                         );
 
-        // Validate stock
+        // STAGE 2: Check if we have enough stock before deducting
         if (batchSize.getQuantity() < quantityToDeduct) {
 
             throw new RuntimeException("Insufficient stock for size: " + size);
         }
 
-        // Deduct stock
+        // STAGE 3: Deduct stock and save size row
         batchSize.setQuantity(batchSize.getQuantity() - quantityToDeduct);
 
         batchSizeRepository.save(batchSize);
 
-    /*
-        Update batch total quantity
-     */
+        // STAGE 4: Recalculate batch total quantity (sum of all sizes
         WarehouseBatchEntity batch = batchSize.getBatch();
 
         int totalQuantity = calculateBatchTotalQuantity(batch);
 
         batch.setTotalQuantity(totalQuantity);
 
-        // Auto-detect depletion
+        // STAGE 5: Auto-detect depletion — if total hits zero, mark depleted
         if (totalQuantity == 0 && batch.getDepletedAt() == null) {
             batch.setDepletedAt(LocalDateTime.now());
         }
 
         batchRepository.save(batch);
 
-        // Record depletion history
+        // STAGE 6: Record depletion history if batch is now empty
         if (totalQuantity == 0) {
             DepletedHistoryEntity depletedHistory = new DepletedHistoryEntity();
             depletedHistory.setBatchId(batchId);
@@ -134,27 +133,31 @@ public class WarehouseBatchSizeService {
     @Transactional
     public void restockBatchSizes(WarehouseBatchEntity batch, List<SizeQuantityDTO> restockItems, String restockedBy) {
 
+        // STAGE 1: Find if this size already exists in the batch
         for (SizeQuantityDTO item : restockItems) {
             WarehouseBatchSizeEntity existingSize = batchSizeRepository
-                    .findByBatch_BatchIdAndSize(batch.getBatchId(), item.getSize())
+                    .findByBatch_BatchIdAndSize(batch.getBatchId(), item.size())
                     .orElse(null);
 
+            // STAGE 2: Update existing OR create new size row
             if (existingSize != null) {
-                existingSize.setQuantity(existingSize.getQuantity() + item.getQuantity());
-                batchSizeRepository.save(existingSize);
+                existingSize.setQuantity(existingSize.getQuantity() + item.quantity());
+                // STAGE 3: Save the updated/new size to DB
+            batchSizeRepository.save(existingSize);
             } else {
+                // STAGE 3b: Create brand new size for this batch
                 WarehouseBatchSizeEntity newSize = new WarehouseBatchSizeEntity();
                 newSize.setBatch(batch);
-                newSize.setSize(item.getSize());
-                newSize.setQuantity(item.getQuantity());
+                newSize.setSize(item.size());
+                newSize.setQuantity(item.quantity());
                 batchSizeRepository.save(newSize);
             }
 
-            // Record restock history
+            // STAGE 4: Record restock history (who, what batch, which size, how much)
             RestockHistoryEntity history = new RestockHistoryEntity();
             history.setBatchId(batch.getBatchId());
-            history.setSize(item.getSize());
-            history.setQuantityAdded(item.getQuantity());
+            history.setSize(item.size());
+            history.setQuantityAdded(item.quantity());
             history.setRestockedBy(restockedBy);
             restockHistoryRepository.save(history);
         }

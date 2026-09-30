@@ -52,10 +52,10 @@ public class OrderItemService {
             // Link this item to its parent order
             item.setOrder(order);
 
-            if (dto.getProductId() != null) {
+            if (dto.productId() != null) {
 
                 // READY-MADE: sourced from product inventory
-                ProductEntity product = productRepository.findByProductId(dto.getProductId())
+                ProductEntity product = productRepository.findByProductId(dto.productId())
                         .orElseThrow(() -> new NotFoundException("Product not found"));
 
                 item.setProduct(product);
@@ -69,12 +69,12 @@ public class OrderItemService {
                 item.setUnitPrice(BigDecimal.valueOf(product.getProductPrice()));
 
                 // Deduct stock from the specific size requested
-                productSizeService.deductStock(product.getProductId(), dto.getSize(), dto.getQuantity());
+                productSizeService.deductStock(product.getProductId(), dto.size(), dto.quantity());
 
-            } else if (dto.getBatchId() != null) {
+            } else if (dto.batchId() != null) {
 
                 // READY-MADE: sourced from batch inventory
-                WarehouseBatchEntity batch = batchRepository.findByBatchId(dto.getBatchId())
+                WarehouseBatchEntity batch = batchRepository.findByBatchId(dto.batchId())
                         .orElseThrow(() -> new NotFoundException("Batch not found"));
 
                 item.setBatch(batch);
@@ -88,27 +88,27 @@ public class OrderItemService {
                 item.setUnitPrice(BigDecimal.valueOf(batch.getBatchPrice()));
 
                 // Deduct stock from the specific size requested
-                batchSizeService.deductStock(batch.getBatchId(), dto.getSize(), dto.getQuantity());
+                batchSizeService.deductStock(batch.getBatchId(), dto.size(), dto.quantity());
 
             } else {
 
                 // CUSTOM-MADE: no inventory exists yet
-                item.setType(dto.getType());
-                item.setVariant(dto.getVariant());
-                item.setColor(dto.getColor());
-                item.setUnitPrice(dto.getUnitPrice());
+                item.setType(dto.type());
+                item.setVariant(dto.variant());
+                item.setColor(dto.color());
+                item.setUnitPrice(dto.unitPrice());
             }
 
             // Calculate total price for this line item
-            BigDecimal totalPrice = item.getUnitPrice().multiply(BigDecimal.valueOf(dto.getQuantity()));
+            BigDecimal totalPrice = item.getUnitPrice().multiply(BigDecimal.valueOf(dto.quantity()));
             item.setTotalPrice(totalPrice);
 
             // Save item — measurements require an existing orderItemId in the database
             OrderItemEntity savedItem = orderItemRepository.save(item);
 
             // Save measurements if provided
-            if (dto.getMeasurements() != null && !dto.getMeasurements().isEmpty()) {
-                measurementService.createMeasurements(savedItem, dto.getMeasurements());
+            if (dto.measurements() != null && !dto.measurements().isEmpty()) {
+                measurementService.createMeasurements(savedItem, dto.measurements());
             }
 
             items.add(savedItem);
